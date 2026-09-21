@@ -8,6 +8,10 @@
 - `tests/run-logic.test.js` contains unit tests for distance, GPS filtering, lap interpolation, and formatters.
 - `Dockerfile` defines the Cloud Run container. `README.md` documents local setup and deployment.
 
+## Target Device
+
+- The app's supported and validation device is fixed to the Google Pixel 10a. Treat this device as the target for UI, GPS, and screen wake-lock behavior unless the user explicitly requests otherwise.
+
 ## Build, Test, and Development Commands
 
 Run these commands from the repository root:

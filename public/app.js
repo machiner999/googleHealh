@@ -9,6 +9,9 @@ import {
 const RUN_STORAGE_KEY = "running_tracker_sessions_v1";
 const LEGACY_RUN_STORAGE_KEY = "google_health_running_sessions_v1";
 const GEOLOCATION_OPTIONS = { enableHighAccuracy: true, maximumAge: 1_000, timeout: 10_000 };
+const RUN_RENDER_INTERVAL_MS = 500;
+const PACE_UPDATE_INTERVAL_MS = 5_000;
+const VOICE_LANGUAGE = "ja-JP";
 
 const runNotice = document.querySelector("#run-notice");
 const runState = document.querySelector("#run-state");
@@ -73,17 +76,22 @@ function renderLaps() {
     <div class="lap-row">
       <strong>${lap.number} km</strong>
       <span>${formatDuration(lap.lapMs)}</span>
-      <span>${formatPace(lap.paceMsPerKm)} /km</span>
       <small>累計 ${formatDuration(lap.cumulativeMs)}</small>
     </div>`).join("");
 }
 
-function renderRun() {
+function renderPace() {
+  const elapsed = getElapsedMs();
+  const distanceKm = run.distanceM / 1000;
+  runPace.textContent = distanceKm >= 0.02 ? formatPace(elapsed / distanceKm) : "—";
+}
+
+function renderRun({ updatePace = run.status !== "running" } = {}) {
   const elapsed = getElapsedMs();
   const distanceKm = run.distanceM / 1000;
   runTime.textContent = formatDuration(elapsed);
   runDistance.textContent = distanceKm.toFixed(2);
-  runPace.textContent = distanceKm >= 0.02 ? formatPace(elapsed / distanceKm) : "—";
+  if (updatePace) renderPace();
   runState.textContent = { idle: "準備完了", running: "計測中", paused: "一時停止中", finished: "完了" }[run.status];
   setHidden(runStart, run.status === "running" || run.status === "paused");
   runStart.textContent = run.status === "finished" ? "もう一度計測" : "計測開始";
@@ -114,9 +122,10 @@ function clearWatch() {
 }
 
 async function releaseWakeLock() {
-  if (!run.wakeLock) return;
-  try { await run.wakeLock.release(); } catch { /* already released */ }
+  const wakeLock = run.wakeLock;
   run.wakeLock = null;
+  if (!wakeLock) return;
+  try { await wakeLock.release(); } catch { /* already released */ }
 }
 
 async function requestWakeLock() {
@@ -127,6 +136,19 @@ async function requestWakeLock() {
   } catch {
     // Screen Wake Lock is optional and unsupported on some mobile browsers.
   }
+}
+
+function cancelLapAnnouncements() {
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+}
+
+function announceLap(crossing) {
+  if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance !== "function") return;
+  const announcement = new SpeechSynthesisUtterance(
+    `${crossing.number}キロ走りました。ラップタイムは${formatDuration(crossing.lapMs)}です。`
+  );
+  announcement.lang = VOICE_LANGUAGE;
+  window.speechSynthesis.speak(announcement);
 }
 
 function positionFrom(position) {
@@ -174,6 +196,7 @@ function handlePosition(position) {
     run.laps.push({ number: crossing.number, distanceMeters: crossing.distanceMeters, lapMs: crossing.lapMs, cumulativeMs: crossing.elapsedMs, paceMsPerKm: crossing.lapMs });
     run.lastLapElapsedMs = crossing.elapsedMs;
     setRunNotice(`${crossing.number}km 到達。ラップを記録しました。`);
+    announceLap(crossing);
   }
   renderRun();
 }
@@ -213,6 +236,7 @@ function resetMeasurement() {
   run.lastAcceptedElapsedMs = 0;
   run.lastLapElapsedMs = 0;
   run.laps = [];
+  cancelLapAnnouncements();
   gpsStatus.textContent = "GPS 未接続";
   renderRun();
 }
@@ -307,13 +331,18 @@ runStart.addEventListener("click", startRun);
 runPause.addEventListener("click", pauseRun);
 runResume.addEventListener("click", resumeRun);
 runStop.addEventListener("click", finishRun);
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && run.status === "running") requestWakeLock(); });
-setInterval(() => { if (run.status === "running") renderRun(); }, 500);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") requestWakeLock();
+  else releaseWakeLock();
+});
+setInterval(() => { if (run.status === "running") renderRun({ updatePace: false }); }, RUN_RENDER_INTERVAL_MS);
+setInterval(() => { if (run.status === "running") renderPace(); }, PACE_UPDATE_INTERVAL_MS);
 
 function init() {
   loadDemoRun();
   renderRun();
   renderHistory();
+  requestWakeLock();
 }
 
 init();
