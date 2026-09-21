@@ -1,0 +1,4 @@
+interface:
+  display_name: "Running Tracker Deploy"
+  short_description: "テスト・push・Cloud Runデプロイを支援"
+  default_prompt: "Running Trackerの変更を検証し、明示された場合はcommit、push、Cloud Runデプロイまで実行してください。"

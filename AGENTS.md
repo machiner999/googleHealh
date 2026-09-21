@@ -4,6 +4,7 @@
 
 - `server.js` is the Node.js HTTP server and static-file server.
 - `public/` contains the browser UI: `index.html`, `app.js`, `styles.css`, and the GPS/run logic in `run-logic.js`. `/?demo=10km` provides a non-persistent 10km result preview for UI checks.
+- `skills/running-tracker-deploy/` contains the repository-local deployment skill and its validated Cloud Run helper script.
 - `tests/run-logic.test.js` contains unit tests for distance, GPS filtering, lap interpolation, and formatters.
 - `Dockerfile` defines the Cloud Run container. `README.md` documents local setup and deployment.
 
@@ -19,6 +20,8 @@ npm test          # Run the Node.js test suite
 ```
 
 Cloud Run deployments use `gcloud run deploy --source .`; follow the complete, parameterized procedure in `README.md`. Do not deploy secrets or `.env` files with the source.
+
+For a repeatable deployment workflow, use `skills/running-tracker-deploy/SKILL.md` and run its `scripts/deploy.sh` only after an explicit deployment request.
 
 ## Coding Style & Naming Conventions
 

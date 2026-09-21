@@ -19,28 +19,41 @@ npm start
 
 GPSはHTTPSまたは端末上の `localhost` でのみ利用できます。スマートフォンから開発PC上のサーバーへアクセスする場合は、Cloud RunなどのHTTPS URLを使用してください。
 
+10km走行後の画面を確認する場合は、`http://localhost:3000/?demo=10km` を開きます。このプレビューはLocalStorageへ保存しません。
+
 ## Cloud Run への配置
 
-Google Cloudプロジェクトと `gcloud` CLIを用意し、以下の値を環境に合わせて変更します。
+このリポジトリには、検証からCloud Run公開URLの確認までを行うデプロイskillがあります。
+
+初回だけ、Google Cloud CLIへログインします。
 
 ```bash
-export PROJECT_ID="your-project-id"
-export REGION="asia-northeast1"
-export SERVICE_NAME="running-tracker"
-
-gcloud config set project "${PROJECT_ID}"
-gcloud run deploy "${SERVICE_NAME}" \
-  --source . \
-  --project="${PROJECT_ID}" \
-  --region="${REGION}" \
-  --allow-unauthenticated \
-  --min=0 \
-  --max=1 \
-  --cpu=1 \
-  --memory=256Mi
+gcloud auth login
 ```
 
-デプロイ後に表示されるHTTPS URLをスマートフォンで開いてください。
+現在のデプロイ先は次の通りです。
+
+- プロジェクト: `aigamerfriend`
+- リージョン: `asia-northeast1`
+- サービス: `google-health-dashboard`
+
+テスト、構文チェック、デプロイ、公開URL確認をまとめて実行します。
+
+```bash
+./skills/running-tracker-deploy/scripts/deploy.sh
+```
+
+デプロイ先を変更する場合は、実行時に環境変数で上書きできます。
+
+```bash
+PROJECT_ID="your-project-id" \
+REGION="asia-northeast1" \
+SERVICE_NAME="your-service-name" \
+SERVICE_URL="https://your-service-url" \
+./skills/running-tracker-deploy/scripts/deploy.sh
+```
+
+デプロイ後に表示されるHTTPS URLをスマートフォンで開いてください。commitとpushは、変更内容を確認したうえで別途実行します。
 
 ## 開発
 
