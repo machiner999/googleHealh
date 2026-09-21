@@ -24,40 +24,186 @@ GPSはHTTPSまたは端末上の `localhost` でのみ利用できます。ス�
 
 ## Cloud Run への配置
 
-Cloud RunではセッションをFirestoreに保存します。あらかじめFirestoreデータベースを作成し、Secret Managerに次の2つのシークレットを登録してください。
+Cloud RunではセッションをFirestoreに保存します。以下は初回セットアップから、ソースコードを更新した後の再デプロイまでの手順です。
+
+### 前提
+
+- Google Cloud プロジェクトと請求先アカウントが有効であること
+- `gcloud` CLIでログイン済みであること
+- Google Health API、Cloud Run、Firestore、Secret Managerを利用できること
+
+最初に、以降のコマンドで使用する値を設定します。値は自分のGoogle Cloud環境に合わせて変更してください。
+
+```bash
+export PROJECT_ID="your-project-id"
+export REGION="asia-northeast1"
+export SERVICE_NAME="google-health-dashboard"
+export SERVICE_ACCOUNT="google-health-dashboard@${PROJECT_ID}.iam.gserviceaccount.com"
+export GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+
+gcloud config set project "${PROJECT_ID}"
+```
+
+### 初回だけ行う設定
+
+必要なAPIを有効化します。
+
+```bash
+gcloud services enable \
+  run.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  firestore.googleapis.com \
+  secretmanager.googleapis.com
+```
+
+Cloud RunからFirestoreとSecret Managerへアクセスするサービスアカウントを作成します。
+
+```bash
+gcloud iam service-accounts create google-health-dashboard \
+  --display-name="Google Health Dashboard Cloud Run"
+
+gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+  --member="serviceAccount:${SERVICE_ACCOUNT}" \
+  --role="roles/datastore.user"
+```
+
+FirestoreのNativeモードデータベースを、Cloud Runと同じリージョンに作成します。既に作成済みの場合はスキップしてください。
+
+```bash
+gcloud firestore databases create \
+  --location="${REGION}" \
+  --type=firestore-native
+```
+
+Secret ManagerにClient Secretとセッション秘密鍵を登録します。値は画面に表示されないよう、入力プロンプトから登録します。
+
+```bash
+read -rsp "Google OAuth Client Secret: " GOOGLE_CLIENT_SECRET
+printf '\n'
+printf '%s' "${GOOGLE_CLIENT_SECRET}" | \
+  gcloud secrets create GOOGLE_CLIENT_SECRET --data-file=-
+unset GOOGLE_CLIENT_SECRET
+
+SESSION_SECRET="$(openssl rand -base64 48)"
+printf '%s' "${SESSION_SECRET}" | \
+  gcloud secrets create SESSION_SECRET --data-file=-
+unset SESSION_SECRET
+```
+
+作成済みのサービスアカウントに、上記2つのSecretだけを読み取る権限を付与します。
+
+```bash
+gcloud secrets add-iam-policy-binding GOOGLE_CLIENT_SECRET \
+  --member="serviceAccount:${SERVICE_ACCOUNT}" \
+  --role="roles/secretmanager.secretAccessor"
+
+gcloud secrets add-iam-policy-binding SESSION_SECRET \
+  --member="serviceAccount:${SERVICE_ACCOUNT}" \
+  --role="roles/secretmanager.secretAccessor"
+```
+
+### 初回デプロイ
+
+まずプロジェクト番号を取得してからCloud Runへデプロイします。Cloud RunのURLは通常、サービス名・プロジェクト番号・リージョンから構成されます。
+
+```bash
+export PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
+
+gcloud run deploy "${SERVICE_NAME}" \
+  --source . \
+  --project="${PROJECT_ID}" \
+  --region="${REGION}" \
+  --allow-unauthenticated \
+  --service-account="${SERVICE_ACCOUNT}" \
+  --min=0 \
+  --max=1 \
+  --cpu=1 \
+  --memory=512Mi \
+  --concurrency=80 \
+  --set-env-vars="NODE_ENV=production,SESSION_STORE=firestore,SESSION_COLLECTION=googleHealthSessions,GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID},GOOGLE_REDIRECT_URI=https://${SERVICE_NAME}-${PROJECT_NUMBER}.${REGION}.run.app/oauth2callback" \
+  --set-secrets="GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,SESSION_SECRET=SESSION_SECRET:latest"
+```
+
+Cloud Run URLを確認します。
+
+```bash
+gcloud run services describe "${SERVICE_NAME}" \
+  --project="${PROJECT_ID}" \
+  --region="${REGION}" \
+  --format='value(status.url)'
+```
+
+### 更新後の再デプロイ
+
+`server.js`、`public/`、またはその他のアプリファイルを変更した後は、プロジェクトのルートディレクトリで次のコマンドを実行します。Secretを作り直す必要はありません。
+
+```bash
+gcloud run deploy "${SERVICE_NAME}" \
+  --source . \
+  --project="${PROJECT_ID}" \
+  --region="${REGION}" \
+  --allow-unauthenticated \
+  --service-account="${SERVICE_ACCOUNT}" \
+  --min=0 \
+  --max=1 \
+  --cpu=1 \
+  --memory=512Mi \
+  --concurrency=80 \
+  --set-env-vars="NODE_ENV=production,SESSION_STORE=firestore,SESSION_COLLECTION=googleHealthSessions,GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID},GOOGLE_REDIRECT_URI=https://${SERVICE_NAME}-${PROJECT_NUMBER}.${REGION}.run.app/oauth2callback" \
+  --set-secrets="GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,SESSION_SECRET=SESSION_SECRET:latest"
+```
+
+デプロイ完了後、次のコマンドで稼働確認ができます。
+
+```bash
+export SERVICE_URL="$(gcloud run services describe "${SERVICE_NAME}" \
+  --project="${PROJECT_ID}" \
+  --region="${REGION}" \
+  --format='value(status.url)')"
+
+curl -I "${SERVICE_URL}/"
+```
+
+HTTPステータスが `200` ならアプリが起動しています。
+
+### OAuthクライアントの設定
+
+Google CloudのOAuthクライアントに、ローカル用とCloud Run用の両方を登録します。
+
+```text
+承認済みのJavaScript生成元:
+http://localhost:3000
+https://<Cloud Runのホスト名>
+
+承認済みのリダイレクトURI:
+http://localhost:3000/oauth2callback
+https://<Cloud Runのホスト名>/oauth2callback
+```
+
+Cloud RunのOAuthをテストするGoogleアカウントは、Google Auth Platformの「対象」設定にテストユーザーとして追加してください。テスト中のアプリでは、登録されていないアカウントは `403 access_denied` になります。
+
+OAuth設定を変更した直後は、Google側の反映に数分から数時間かかる場合があります。
+
+### Secretの更新
+
+Client Secretをローテーションする場合は、Secretに新しいバージョンを追加してからCloud Runを再デプロイします。
+
+```bash
+printf '%s' "${NEW_GOOGLE_CLIENT_SECRET}" | \
+  gcloud secrets versions add GOOGLE_CLIENT_SECRET --data-file=-
+
+gcloud run deploy "${SERVICE_NAME}" \
+  --source . \
+  --project="${PROJECT_ID}" \
+  --region="${REGION}" \
+  --allow-unauthenticated
+```
+
+Cloud Runでは、次の2つのSecretを使用します。
 
 - `GOOGLE_CLIENT_SECRET`
 - `SESSION_SECRET`
-
-デプロイ例：
-
-```bash
-gcloud run deploy google-health-dashboard \
-  --source . \
-  --region asia-northeast1 \
-  --allow-unauthenticated \
-  --set-env-vars NODE_ENV=production,SESSION_STORE=firestore,SESSION_COLLECTION=googleHealthSessions,GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
-  --set-secrets GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,SESSION_SECRET=SESSION_SECRET:latest
-```
-
-デプロイ後に発行されたCloud Run URLを取得し、`GOOGLE_REDIRECT_URI`を更新します。
-
-```bash
-gcloud run services describe google-health-dashboard \
-  --region asia-northeast1 \
-  --format='value(status.url)'
-
-gcloud run services update google-health-dashboard \
-  --region asia-northeast1 \
-  --update-env-vars GOOGLE_REDIRECT_URI=https://your-service-xxxxx-an.a.run.app/oauth2callback
-```
-
-同じCloud Run URLを使って、Google CloudのOAuthクライアントへ次を登録します。
-
-```text
-承認済みのJavaScript生成元: https://your-service-xxxxx-an.a.run.app
-承認済みのリダイレクトURI: https://your-service-xxxxx-an.a.run.app/oauth2callback
-```
 
 Cloud Runのサービスアカウントには、Firestoreデータベースへ読み書きできる権限を付与してください。
 
