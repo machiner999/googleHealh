@@ -77,9 +77,9 @@ function renderLapChart() {
 
   const chartWidth = 640;
   const chartTop = 24;
-  const chartBottom = 228;
-  const chartLeft = 50;
-  const chartRight = chartWidth - 34;
+  const chartBottom = 288;
+  const chartLeft = 62;
+  const chartRight = chartWidth - 8;
   const lapTimes = run.laps.map((lap) => lap.lapMs);
   const bestLapMs = Math.min(...lapTimes);
   const slowestLapMs = Math.max(...lapTimes);
@@ -103,7 +103,7 @@ function renderLapChart() {
   lapChartSummary.textContent = `BEST ${formatDuration(bestLapMs)}`;
   lapChart.innerHTML = `
     <div class="lap-chart-plot">
-      <svg viewBox="0 0 ${chartWidth} 306" width="${chartWidth}" height="306" aria-hidden="true" focusable="false">
+      <svg viewBox="0 0 ${chartWidth} 366" width="${chartWidth}" height="366" aria-hidden="true" focusable="false">
         <g class="lap-chart-grid">
           <line class="lap-chart-axis" x1="${chartLeft}" y1="${chartTop}" x2="${chartLeft}" y2="${chartBottom}"></line>
           <line x1="${chartLeft}" y1="${chartTop}" x2="${chartRight}" y2="${chartTop}"></line>
@@ -111,9 +111,9 @@ function renderLapChart() {
           <line x1="${chartLeft}" y1="${chartBottom}" x2="${chartRight}" y2="${chartBottom}"></line>
         </g>
         <text class="lap-chart-axis-unit lap-chart-y-axis-unit" x="4" y="13">ペース (min/km)</text>
-        <text class="lap-chart-axis-label" x="4" y="${chartTop + 5}">${formatDuration(chartMinMs)}</text>
-        <text class="lap-chart-axis-label" x="4" y="${(chartTop + chartBottom) / 2 + 5}">${formatDuration(chartMidMs)}</text>
-        <text class="lap-chart-axis-label" x="4" y="${chartBottom + 5}">${formatDuration(chartMaxMs)}</text>
+        <text class="lap-chart-axis-label" x="${chartLeft - 8}" y="${chartTop + 5}">${formatDuration(chartMinMs)}</text>
+        <text class="lap-chart-axis-label" x="${chartLeft - 8}" y="${(chartTop + chartBottom) / 2 + 5}">${formatDuration(chartMidMs)}</text>
+        <text class="lap-chart-axis-label" x="${chartLeft - 8}" y="${chartBottom + 5}">${formatDuration(chartMaxMs)}</text>
         <path class="lap-chart-area" d="${areaPath}"></path>
         <polyline class="lap-chart-line" points="${pointList}"></polyline>
         ${points.map(({ lap, x, y }) => `<circle class="lap-chart-point${lap.lapMs === bestLapMs ? " is-best" : ""}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"></circle>`).join("")}

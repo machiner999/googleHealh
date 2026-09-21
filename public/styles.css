@@ -38,47 +38,6 @@ b {
   padding: 20px 0 34px;
 }
 
-.topbar {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line);
-}
-
-.brand-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0;
-}
-
-.wordmark,
-.device-note {
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .12em;
-}
-
-.wordmark {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.wordmark span {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--signal-dark);
-  box-shadow: 0 0 0 4px rgba(145, 191, 22, .14);
-}
-
-.device-note {
-  color: var(--muted);
-  font-weight: 600;
-}
-
 h1,
 h2,
 p {
@@ -189,7 +148,7 @@ h2 {
 
 .panel.lap-chart-panel .panel-heading {
   margin-bottom: 0;
-  padding: 24px;
+  padding: 8px 24px;
 }
 
 .panel.lap-chart-panel h2 {
@@ -326,7 +285,7 @@ h2 {
   min-width: 190px;
   min-height: 60px;
   padding: 15px 28px;
-  font-size: 19px;
+  font-size: 17px;
 }
 
 .run-button.pause {
@@ -345,7 +304,7 @@ h2 {
 
 .lap-chart {
   min-height: 150px;
-  padding: 14px;
+  padding: 8px 14px 14px;
   border: 1px solid #393c36;
   border-radius: 6px;
   background: var(--night);
@@ -423,7 +382,7 @@ h2 {
 .lap-chart-axis-unit {
   fill: var(--signal);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 17px;
+  font-size: 23px;
   font-weight: 850;
   paint-order: stroke;
   stroke: var(--night);
@@ -441,12 +400,12 @@ h2 {
 .lap-chart-axis-label {
   fill: #f4f5ef;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 850;
   paint-order: stroke;
   stroke: var(--night);
   stroke-width: 3px;
-  text-anchor: start;
+  text-anchor: end;
 }
 
 .lap-chart-empty {
@@ -545,7 +504,7 @@ h2 {
   }
 
   .panel.lap-chart-panel .panel-heading {
-    padding: 18px 16px;
+    padding: 8px 16px;
   }
 
   .run-metrics {
