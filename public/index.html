@@ -3,46 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Health Overview</title>
+    <title>Running Tracker</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <main class="shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">GOOGLE HEALTH API</p>
-          <h1>今日のコンディション</h1>
-          <p class="subtitle">Fitbit、Pixel Watch などのデータを、ひとつの画面で確認します。</p>
-        </div>
-        <div class="actions">
-          <input id="date" type="date" aria-label="表示する日付" />
-          <a class="button secondary hidden" id="logout" href="/auth/logout">切断</a>
-          <a class="button" id="connect" href="/auth/google">Google で接続</a>
+          <p class="eyebrow">RUNNING TRACKER</p>
+          <h1>ランニングの状況</h1>
+          <p class="subtitle">走行中の距離・時間・ペース・ラップをリアルタイムで確認します。</p>
         </div>
       </header>
 
-      <nav class="mode-tabs" aria-label="表示モード">
-        <button class="mode-tab active" type="button" data-view="overview-view">健康ダッシュボード</button>
-        <button class="mode-tab" type="button" data-view="run-view">ランニング</button>
-      </nav>
-
-      <section id="overview-view">
-        <div id="notice" class="notice">Google Health API に接続すると、あなたの健康データが表示されます。</div>
-        <section id="summary" class="cards" aria-live="polite"></section>
-
-        <section class="panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">LAST 7 DAYS</p>
-              <h2>活動の推移</h2>
-            </div>
-            <span class="legend"><i></i>実測値</span>
-          </div>
-          <div id="chart" class="chart empty">接続後にデータを読み込みます。</div>
-        </section>
-      </section>
-
-      <section id="run-view" class="hidden" aria-live="polite">
+      <section id="run-view" aria-live="polite">
         <div id="run-notice" class="notice">開始を押すとGPS計測を開始します。走行中はGPSの許可が必要です。</div>
         <section class="run-hero panel">
           <div class="run-status-row">
@@ -79,7 +53,7 @@
         </section>
       </section>
 
-      <p class="privacy">健康データは読み取り専用です。ランニングのGPS軌跡は保存・送信せず、ラップ概要だけをこのブラウザに保存します。</p>
+      <p class="privacy">ランニングのGPS軌跡は保存・送信せず、走行結果とラップ概要だけをこのブラウザに保存します。</p>
     </main>
     <script src="/app.js" type="module"></script>
   </body>

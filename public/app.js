@@ -6,23 +6,10 @@ import {
   lapCrossings
 } from "/run-logic.js";
 
-const labels = {
-  steps: { label: "歩数", unit: "歩", decimals: 0 },
-  distance: { label: "距離", unit: "km", decimals: 1 },
-  "total-calories": { label: "消費カロリー", unit: "kcal", decimals: 0 },
-  "active-minutes": { label: "アクティブ時間", unit: "分", decimals: 0 },
-  weight: { label: "体重", unit: "kg", decimals: 1 }
-};
-
-const RUN_STORAGE_KEY = "google_health_running_sessions_v1";
+const RUN_STORAGE_KEY = "running_tracker_sessions_v1";
+const LEGACY_RUN_STORAGE_KEY = "google_health_running_sessions_v1";
 const GEOLOCATION_OPTIONS = { enableHighAccuracy: true, maximumAge: 1_000, timeout: 10_000 };
 
-const dateInput = document.querySelector("#date");
-const summary = document.querySelector("#summary");
-const chart = document.querySelector("#chart");
-const notice = document.querySelector("#notice");
-const connect = document.querySelector("#connect");
-const logout = document.querySelector("#logout");
 const runNotice = document.querySelector("#run-notice");
 const runState = document.querySelector("#run-state");
 const gpsStatus = document.querySelector("#gps-status");
@@ -52,62 +39,8 @@ const run = {
   laps: []
 };
 
-function localDateKey(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-dateInput.value = localDateKey();
-
-function format(value, decimals = 0) {
-  return value == null ? "—" : Number(value).toLocaleString("ja-JP", { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
-}
-
-function displayDate(value) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString("ja-JP", { month: "short", day: "numeric" });
-}
-
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
-}
-
-function renderHealth(data) {
-  const selected = data.days[data.days.length - 1] || {};
-  summary.innerHTML = Object.entries(labels).map(([key, meta]) => `
-    <article class="card">
-      <div class="card-label">${meta.label}</div>
-      <div><span class="card-value">${format(selected[key], meta.decimals)}</span><span class="card-unit">${meta.unit}</span></div>
-      <div class="card-date">${displayDate(selected.date)} の集計</div>
-    </article>`).join("");
-
-  const values = data.days.map((day) => Number(day.steps || 0));
-  const max = Math.max(...values, 1);
-  chart.classList.remove("empty");
-  chart.innerHTML = data.days.map((day) => `
-    <div class="bar-column" title="${displayDate(day.date)}: ${format(day.steps)} 歩">
-      <div class="bar-value">${day.steps == null ? "—" : format(day.steps)}</div>
-      <div class="bar-track"><div class="bar" style="height:${Math.max(3, (Number(day.steps || 0) / max) * 100)}%"></div></div>
-      <div class="bar-date">${displayDate(day.date)}</div>
-    </div>`).join("");
-}
-
-async function loadHealth() {
-  notice.classList.remove("error");
-  notice.textContent = "データを読み込んでいます…";
-  try {
-    const response = await fetch(`/api/health?date=${encodeURIComponent(dateInput.value)}`);
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error || "データを取得できませんでした。");
-    renderHealth(body);
-    const failed = Object.keys(body.errors || {});
-    notice.textContent = failed.length ? `一部のデータ型を取得できませんでした（${failed.join(", ")}）。` : "Google Health API から最新データを表示しています。";
-    if (failed.length) notice.classList.add("error");
-  } catch (error) {
-    notice.textContent = error.message;
-    notice.classList.add("error");
-    summary.innerHTML = "";
-    chart.className = "chart empty";
-    chart.textContent = "データを表示できません。";
-  }
 }
 
 function getElapsedMs() {
@@ -158,6 +91,21 @@ function renderRun() {
   setHidden(runResume, run.status !== "paused");
   setHidden(runStop, run.status === "idle" || run.status === "finished");
   renderLaps();
+}
+
+function loadDemoRun() {
+  if (new URLSearchParams(window.location.search).get("demo") !== "10km") return;
+  const lapTimes = [336_000, 341_000, 339_000, 340_000, 337_000, 342_000, 339_000, 338_000, 341_000, 340_000];
+  let cumulativeMs = 0;
+  run.status = "finished";
+  run.elapsedMs = lapTimes.reduce((total, lapMs) => total + lapMs, 0);
+  run.distanceM = 10_000;
+  run.laps = lapTimes.map((lapMs, index) => {
+    cumulativeMs += lapMs;
+    return { number: index + 1, distanceMeters: (index + 1) * 1_000, lapMs, cumulativeMs, paceMsPerKm: lapMs };
+  });
+  gpsStatus.textContent = "GPS計測完了";
+  setRunNotice("10km走行後のデモ表示です。", false);
 }
 
 function clearWatch() {
@@ -306,7 +254,8 @@ function resumeRun() {
 
 function readHistory() {
   try {
-    const history = JSON.parse(localStorage.getItem(RUN_STORAGE_KEY) || "[]");
+    const stored = localStorage.getItem(RUN_STORAGE_KEY) || localStorage.getItem(LEGACY_RUN_STORAGE_KEY) || "[]";
+    const history = JSON.parse(stored);
     return Array.isArray(history) ? history : [];
   } catch { return []; }
 }
@@ -354,31 +303,17 @@ function abortRun() {
   resetMeasurement();
 }
 
-document.querySelectorAll(".mode-tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".mode-tab").forEach((item) => item.classList.toggle("active", item === tab));
-    document.querySelectorAll("#overview-view, #run-view").forEach((view) => view.classList.toggle("hidden", view.id !== tab.dataset.view));
-    if (tab.dataset.view === "run-view") renderHistory();
-  });
-});
-
 runStart.addEventListener("click", startRun);
 runPause.addEventListener("click", pauseRun);
 runResume.addEventListener("click", resumeRun);
 runStop.addEventListener("click", finishRun);
-dateInput.addEventListener("change", () => { if (!connect.classList.contains("hidden")) return; loadHealth(); });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && run.status === "running") requestWakeLock(); });
 setInterval(() => { if (run.status === "running") renderRun(); }, 500);
 
-async function init() {
+function init() {
+  loadDemoRun();
   renderRun();
   renderHistory();
-  const status = await fetch("/api/status").then((response) => response.json());
-  if (status.connected) {
-    connect.classList.add("hidden");
-    logout.classList.remove("hidden");
-    await loadHealth();
-  }
 }
 
 init();

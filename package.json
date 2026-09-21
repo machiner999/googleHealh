@@ -1,8 +1,8 @@
 {
-  "name": "google-health-dashboard",
+  "name": "running-tracker",
   "version": "1.0.0",
   "private": true,
-  "description": "A small browser dashboard for Google Health API data.",
+  "description": "A browser-based running tracker using GPS.",
   "type": "module",
   "scripts": {
     "start": "node server.js",
@@ -12,7 +12,5 @@
   "engines": {
     "node": ">=20"
   },
-  "dependencies": {
-    "@google-cloud/firestore": "^7.11.0"
-  }
+  "dependencies": {}
 }
