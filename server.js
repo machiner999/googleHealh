@@ -258,6 +258,7 @@ async function handle(req, res) {
       redirect_uri: redirectUri,
       response_type: "code",
       access_type: "offline",
+      prompt: "consent",
       include_granted_scopes: "true",
       scope: scopes.join(" "),
       state
@@ -274,6 +275,8 @@ async function handle(req, res) {
     if (!code) return send(res, 400, { error: url.searchParams.get("error_description") || "Google 認証がキャンセルされました。" });
     try {
       const token = await googleTokenRequest({ code, client_id: clientId, client_secret: clientSecret, redirect_uri: redirectUri, grant_type: "authorization_code" });
+      if (!token.access_token) throw new Error("Googleからアクセストークンが返されませんでした。もう一度 Google で接続してください。");
+      if (!token.refresh_token) throw new Error("Googleからリフレッシュトークンが返されませんでした。Googleの認証画面でアクセスを許可し、もう一度お試しください。");
       const sessionId = crypto.randomBytes(32).toString("hex");
       await sessions.set(sessionId, { accessToken: token.access_token, refreshToken: token.refresh_token, expiresAt: Date.now() + (token.expires_in || 3600) * 1000, createdAt: Date.now() });
       setCookie(res, "ghealth_session", signedValue(sessionId));
