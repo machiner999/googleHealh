@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Health Overview</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">GOOGLE HEALTH API</p>
+          <h1>今日のコンディション</h1>
+          <p class="subtitle">Fitbit、Pixel Watch などのデータを、ひとつの画面で確認します。</p>
+        </div>
+        <div class="actions">
+          <input id="date" type="date" aria-label="表示する日付" />
+          <a class="button secondary hidden" id="logout" href="/auth/logout">切断</a>
+          <a class="button" id="connect" href="/auth/google">Google で接続</a>
+        </div>
+      </header>
+
+      <nav class="mode-tabs" aria-label="表示モード">
+        <button class="mode-tab active" type="button" data-view="overview-view">健康ダッシュボード</button>
+        <button class="mode-tab" type="button" data-view="run-view">ランニング</button>
+      </nav>
+
+      <section id="overview-view">
+        <div id="notice" class="notice">Google Health API に接続すると、あなたの健康データが表示されます。</div>
+        <section id="summary" class="cards" aria-live="polite"></section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">LAST 7 DAYS</p>
+              <h2>活動の推移</h2>
+            </div>
+            <span class="legend"><i></i>実測値</span>
+          </div>
+          <div id="chart" class="chart empty">接続後にデータを読み込みます。</div>
+        </section>
+      </section>
+
+      <section id="run-view" class="hidden" aria-live="polite">
+        <div id="run-notice" class="notice">開始を押すとGPS計測を開始します。走行中はGPSの許可が必要です。</div>
+        <section class="run-hero panel">
+          <div class="run-status-row">
+            <span id="run-state" class="run-state">準備完了</span>
+            <span id="gps-status" class="gps-status">GPS 未接続</span>
+          </div>
+          <div class="run-metrics">
+            <div class="run-metric primary"><span>経過時間</span><strong id="run-time">0:00</strong></div>
+            <div class="run-metric"><span>走行距離</span><strong><b id="run-distance">0.00</b><small> km</small></strong></div>
+            <div class="run-metric"><span>ペース</span><strong><b id="run-pace">—</b><small> /km</small></strong></div>
+          </div>
+          <div class="run-controls">
+            <button id="run-start" class="button run-button start" type="button">計測開始</button>
+            <button id="run-pause" class="button run-button pause hidden" type="button">一時停止</button>
+            <button id="run-resume" class="button run-button resume hidden" type="button">再開</button>
+            <button id="run-stop" class="button secondary run-button hidden" type="button">終了して保存</button>
+          </div>
+        </section>
+
+        <section class="run-columns">
+          <section class="panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">KILOMETER LAPS</p><h2>ラップ</h2></div>
+              <span id="lap-count" class="legend">0 km</span>
+            </div>
+            <div id="lap-list" class="lap-list empty-list">1km走るとラップが表示されます。</div>
+          </section>
+          <section class="panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">HISTORY</p><h2>走行履歴</h2></div>
+            </div>
+            <div id="run-history" class="run-history empty-list">保存された走行履歴はありません。</div>
+          </section>
+        </section>
+      </section>
+
+      <p class="privacy">健康データは読み取り専用です。ランニングのGPS軌跡は保存・送信せず、ラップ概要だけをこのブラウザに保存します。</p>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

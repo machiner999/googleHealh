@@ -1,0 +1,18 @@
+{
+  "name": "google-health-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A small browser dashboard for Google Health API data.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.0"
+  }
+}
