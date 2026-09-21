@@ -35,8 +35,9 @@ gcloud run deploy "${service_name}" \
   --memory=256Mi
 
 page="$(curl --fail --silent --show-error "${service_url}/")"
-if ! grep -q '<title>Running Tracker</title>' <<< "${page}"; then
-  echo "Deployment response did not contain the Running Tracker title" >&2
+if ! grep -q '<title>RUN LOG | ランニング記録</title>' <<< "${page}" \
+  || ! grep -q 'id="run-start"' <<< "${page}"; then
+  echo "Deployment response did not contain the RUN LOG title and running controls" >&2
   exit 1
 fi
 
