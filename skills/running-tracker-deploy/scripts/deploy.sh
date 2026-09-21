@@ -2,7 +2,7 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-repo_root="$(cd "${script_dir}/../.." && pwd)"
+repo_root="$(cd "${script_dir}/../../.." && pwd)"
 project_id="${PROJECT_ID:-aigamerfriend}"
 region="${REGION:-asia-northeast1}"
 service_name="${SERVICE_NAME:-google-health-dashboard}"
