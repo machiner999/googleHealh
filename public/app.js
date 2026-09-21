@@ -1,14 +1,17 @@
 import {
-  acceptedSegment,
+  createTrackFilter,
   formatDuration,
   formatPace,
+  GPS_READY_REQUIRED_SAMPLES,
+  isReadyPosition,
   isUsablePosition,
-  lapCrossings
+  lapCrossings,
+  processTrackPoint
 } from "/run-logic.js";
 
 const RUN_STORAGE_KEY = "running_tracker_sessions_v1";
 const LEGACY_RUN_STORAGE_KEY = "google_health_running_sessions_v1";
-const GEOLOCATION_OPTIONS = { enableHighAccuracy: true, maximumAge: 1_000, timeout: 10_000 };
+const GEOLOCATION_OPTIONS = { enableHighAccuracy: true, maximumAge: 0, timeout: 15_000 };
 const RUN_RENDER_INTERVAL_MS = 500;
 const PACE_UPDATE_INTERVAL_MS = 5_000;
 const VOICE_LANGUAGE = "ja-JP";
@@ -36,7 +39,9 @@ const run = {
   elapsedMs: 0,
   activeStartedAt: null,
   distanceM: 0,
-  lastPosition: null,
+  readyPositions: [],
+  trackFilter: null,
+  lastRawTimestamp: 0,
   lastAcceptedElapsedMs: 0,
   lastLapElapsedMs: 0,
   laps: []
@@ -92,12 +97,13 @@ function renderRun({ updatePace = run.status !== "running" } = {}) {
   runTime.textContent = formatDuration(elapsed);
   runDistance.textContent = distanceKm.toFixed(2);
   if (updatePace) renderPace();
-  runState.textContent = { idle: "準備完了", running: "計測中", paused: "一時停止中", finished: "完了" }[run.status];
-  setHidden(runStart, run.status === "running" || run.status === "paused");
+  runState.textContent = { idle: "準備完了", acquiring: "GPS準備中", running: "計測中", paused: "一時停止中", finished: "完了" }[run.status];
+  setHidden(runStart, run.status !== "idle" && run.status !== "finished");
   runStart.textContent = run.status === "finished" ? "もう一度計測" : "計測開始";
   setHidden(runPause, run.status !== "running");
   setHidden(runResume, run.status !== "paused");
   setHidden(runStop, run.status === "idle" || run.status === "finished");
+  runStop.textContent = run.status === "acquiring" && !run.startedAt ? "キャンセル" : "終了して保存";
   renderLaps();
 }
 
@@ -160,37 +166,78 @@ function positionFrom(position) {
   };
 }
 
+function beginTracking() {
+  const isResuming = run.startedAt != null;
+  const lastReadyPosition = run.readyPositions.at(-1);
+  run.status = "running";
+  if (!isResuming) run.startedAt = new Date().toISOString();
+  run.activeStartedAt = performance.now();
+  run.trackFilter = createTrackFilter(run.readyPositions);
+  run.readyPositions = [];
+  run.lastAcceptedElapsedMs = getElapsedMs();
+  gpsStatus.textContent = `GPS準備完了（±${Math.round(lastReadyPosition.accuracy)}m）`;
+  setRunNotice(isResuming
+    ? "GPSを再取得しました。計測を再開します。"
+    : "GPSの準備ができました。走行を開始してください。");
+  renderRun();
+}
+
+function handleAcquiringPosition(position, point) {
+  if (!isReadyPosition(position)) {
+    run.readyPositions = [];
+    gpsStatus.textContent = `GPS準備中（精度 ±${Math.round(point.accuracy)}m）`;
+    setRunNotice("GPSの精度が安定するまで、空が見える場所でお待ちください。");
+    renderRun();
+    return;
+  }
+
+  run.readyPositions.push(point);
+  run.readyPositions = run.readyPositions.slice(-GPS_READY_REQUIRED_SAMPLES);
+  const readyCount = run.readyPositions.length;
+  gpsStatus.textContent = `GPS準備中 ${readyCount}/${GPS_READY_REQUIRED_SAMPLES}（±${Math.round(point.accuracy)}m）`;
+  if (readyCount >= GPS_READY_REQUIRED_SAMPLES) {
+    beginTracking();
+    return;
+  }
+  setRunNotice(`GPSの精度を確認中です（${readyCount}/${GPS_READY_REQUIRED_SAMPLES}）。`);
+  renderRun();
+}
+
 function handlePosition(position) {
-  if (run.status !== "running") return;
+  if (run.status !== "acquiring" && run.status !== "running") return;
   const point = positionFrom(position);
+  if (point.timestamp <= run.lastRawTimestamp) {
+    gpsStatus.textContent = "GPSの古い測定値を除外";
+    return;
+  }
+  run.lastRawTimestamp = point.timestamp;
+
+  if (run.status === "acquiring") {
+    handleAcquiringPosition(position, point);
+    return;
+  }
+
   gpsStatus.textContent = `GPS ±${Math.round(point.accuracy)}m`;
   if (!isUsablePosition(position)) {
     gpsStatus.textContent = `GPS精度が低い（±${Math.round(point.accuracy)}m）`;
-    run.lastPosition = null;
     return;
   }
 
   const currentElapsedMs = getElapsedMs();
-  if (!run.lastPosition) {
-    run.lastPosition = point;
-    run.lastAcceptedElapsedMs = currentElapsedMs;
-    setRunNotice("GPSを取得中です。走行を開始してください。");
-    renderRun();
-    return;
-  }
-
   const previousDistance = run.distanceM;
   const previousElapsedMs = run.lastAcceptedElapsedMs;
-  const segment = acceptedSegment(run.lastPosition, point);
-  run.lastPosition = point;
-  run.lastAcceptedElapsedMs = currentElapsedMs;
-  if (!segment) {
-    gpsStatus.textContent = "GPSの揺れ・ジャンプを除外";
+  const result = processTrackPoint(run.trackFilter || createTrackFilter(), point);
+  run.trackFilter = result.filter;
+  if (!result.distanceM) {
+    gpsStatus.textContent = result.reason === "speed-too-high"
+      ? "GPSの異常ジャンプを除外"
+      : "GPSの揺れを補正中";
     renderRun();
     return;
   }
 
-  run.distanceM += segment;
+  run.lastAcceptedElapsedMs = currentElapsedMs;
+  run.distanceM += result.distanceM;
   const crossings = lapCrossings({ previousDistance, currentDistance: run.distanceM, previousElapsedMs, currentElapsedMs, lastLapElapsedMs: run.lastLapElapsedMs });
   for (const crossing of crossings) {
     run.laps.push({ number: crossing.number, distanceMeters: crossing.distanceMeters, lapMs: crossing.lapMs, cumulativeMs: crossing.elapsedMs, paceMsPerKm: crossing.lapMs });
@@ -232,7 +279,9 @@ function resetMeasurement() {
   run.elapsedMs = 0;
   run.activeStartedAt = null;
   run.distanceM = 0;
-  run.lastPosition = null;
+  run.readyPositions = [];
+  run.trackFilter = null;
+  run.lastRawTimestamp = 0;
   run.lastAcceptedElapsedMs = 0;
   run.lastLapElapsedMs = 0;
   run.laps = [];
@@ -242,13 +291,11 @@ function resetMeasurement() {
 }
 
 function startRun() {
-  if (run.status === "running" || run.status === "paused") return;
+  if (run.status === "acquiring" || run.status === "running" || run.status === "paused") return;
   resetMeasurement();
-  run.status = "running";
-  run.startedAt = new Date().toISOString();
-  run.activeStartedAt = performance.now();
+  run.status = "acquiring";
   if (!startWatch()) { abortRun(); return; }
-  setRunNotice("GPSの取得を開始しました。走行を開始してください。");
+  setRunNotice("GPSの精度を確認しています。準備完了までお待ちください。");
   requestWakeLock();
   renderRun();
 }
@@ -258,7 +305,9 @@ function pauseRun() {
   commitElapsed();
   run.status = "paused";
   clearWatch();
-  run.lastPosition = null;
+  run.readyPositions = [];
+  run.trackFilter = null;
+  run.lastRawTimestamp = 0;
   gpsStatus.textContent = "一時停止中";
   releaseWakeLock();
   setRunNotice("一時停止中です。再開するとGPSを再取得します。");
@@ -267,11 +316,16 @@ function pauseRun() {
 
 function resumeRun() {
   if (run.status !== "paused") return;
-  run.status = "running";
-  run.activeStartedAt = performance.now();
-  run.lastPosition = null;
-  if (!startWatch()) { pauseRun(); return; }
-  setRunNotice("GPSを再取得中です。");
+  run.status = "acquiring";
+  run.readyPositions = [];
+  run.trackFilter = null;
+  run.lastRawTimestamp = 0;
+  if (!startWatch()) {
+    run.status = "paused";
+    renderRun();
+    return;
+  }
+  setRunNotice("GPSの精度を確認してから計測を再開します。");
   requestWakeLock();
   renderRun();
 }
@@ -310,7 +364,11 @@ function saveRun() {
 }
 
 function finishRun() {
-  if (run.status !== "running" && run.status !== "paused") return;
+  if (run.status !== "acquiring" && run.status !== "running" && run.status !== "paused") return;
+  if (run.status === "acquiring" && !run.startedAt) {
+    abortRun();
+    return;
+  }
   if (run.status === "running") commitElapsed();
   run.finishedAt = new Date().toISOString();
   run.status = "finished";
@@ -332,7 +390,7 @@ runPause.addEventListener("click", pauseRun);
 runResume.addEventListener("click", resumeRun);
 runStop.addEventListener("click", finishRun);
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") requestWakeLock();
+  if (document.visibilityState === "visible" && (run.status === "acquiring" || run.status === "running")) requestWakeLock();
   else releaseWakeLock();
 });
 setInterval(() => { if (run.status === "running") renderRun({ updatePace: false }); }, RUN_RENDER_INTERVAL_MS);
@@ -342,7 +400,6 @@ function init() {
   loadDemoRun();
   renderRun();
   renderHistory();
-  requestWakeLock();
 }
 
 init();

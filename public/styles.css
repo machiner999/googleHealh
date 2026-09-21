@@ -39,8 +39,9 @@ h2 { margin-bottom: 0; font-size: 28px; letter-spacing: -.03em; }
 .run-metric strong { font-size: 36px; letter-spacing: -.04em; }
 .run-metric.primary strong { font-size: 52px; }
 .run-metric small { margin-left: 4px; color: var(--muted); font-size: 17px; font-weight: 600; }
-.run-controls { display: flex; gap: 10px; flex-wrap: wrap; }
+.run-controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 .run-button { min-width: 130px; border: 0; cursor: pointer; }
+.run-button.start { min-width: 180px; min-height: 62px; padding: 15px 28px; font-size: 20px; }
 .run-button.pause { background: #eb9d43; box-shadow: 0 8px 20px rgba(235, 157, 67, .2); }
 .run-button.resume { background: var(--mint); box-shadow: 0 8px 20px rgba(78, 181, 158, .2); }
 .run-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
