@@ -77,8 +77,8 @@ function renderLapChart() {
 
   const chartWidth = 640;
   const chartTop = 24;
-  const chartBottom = 172;
-  const chartLeft = 34;
+  const chartBottom = 228;
+  const chartLeft = 50;
   const chartRight = chartWidth - 34;
   const lapTimes = run.laps.map((lap) => lap.lapMs);
   const bestLapMs = Math.min(...lapTimes);
@@ -86,6 +86,8 @@ function renderLapChart() {
   const centerLapMs = (bestLapMs + slowestLapMs) / 2;
   const chartRangeMs = Math.max(slowestLapMs - bestLapMs, 30_000);
   const chartMinMs = centerLapMs - chartRangeMs / 2;
+  const chartMidMs = chartMinMs + chartRangeMs / 2;
+  const chartMaxMs = chartMinMs + chartRangeMs;
   const xStep = run.laps.length === 1 ? 0 : (chartRight - chartLeft) / (run.laps.length - 1);
   const points = run.laps.map((lap, index) => ({
     lap,
@@ -101,18 +103,24 @@ function renderLapChart() {
   lapChartSummary.textContent = `BEST ${formatDuration(bestLapMs)}`;
   lapChart.innerHTML = `
     <div class="lap-chart-plot">
-      <svg viewBox="0 0 ${chartWidth} 220" width="${chartWidth}" height="220" aria-hidden="true" focusable="false">
+      <svg viewBox="0 0 ${chartWidth} 306" width="${chartWidth}" height="306" aria-hidden="true" focusable="false">
         <g class="lap-chart-grid">
+          <line class="lap-chart-axis" x1="${chartLeft}" y1="${chartTop}" x2="${chartLeft}" y2="${chartBottom}"></line>
           <line x1="${chartLeft}" y1="${chartTop}" x2="${chartRight}" y2="${chartTop}"></line>
           <line x1="${chartLeft}" y1="${(chartTop + chartBottom) / 2}" x2="${chartRight}" y2="${(chartTop + chartBottom) / 2}"></line>
           <line x1="${chartLeft}" y1="${chartBottom}" x2="${chartRight}" y2="${chartBottom}"></line>
         </g>
+        <text class="lap-chart-axis-unit lap-chart-y-axis-unit" x="4" y="13">ペース (min/km)</text>
+        <text class="lap-chart-axis-label" x="4" y="${chartTop + 5}">${formatDuration(chartMinMs)}</text>
+        <text class="lap-chart-axis-label" x="4" y="${(chartTop + chartBottom) / 2 + 5}">${formatDuration(chartMidMs)}</text>
+        <text class="lap-chart-axis-label" x="4" y="${chartBottom + 5}">${formatDuration(chartMaxMs)}</text>
         <path class="lap-chart-area" d="${areaPath}"></path>
         <polyline class="lap-chart-line" points="${pointList}"></polyline>
         ${points.map(({ lap, x, y }) => `<circle class="lap-chart-point${lap.lapMs === bestLapMs ? " is-best" : ""}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"></circle>`).join("")}
         ${points.map(({ lap, x }, index) => (index === 0 || index === points.length - 1 || index % labelStep === 0)
-    ? `<text class="lap-chart-label" x="${x.toFixed(1)}" y="207">${lap.number}</text>`
+    ? `<text class="lap-chart-label" x="${x.toFixed(1)}" y="${chartBottom + 35}">${lap.number}</text>`
     : "").join("")}
+        <text class="lap-chart-axis-unit lap-chart-x-axis-unit" x="${chartWidth / 2}" y="${chartBottom + 63}">距離 (km)</text>
       </svg>
     </div>`;
 }
@@ -336,6 +344,7 @@ function resetMeasurement() {
   run.lastAcceptedElapsedMs = 0;
   run.lastLapElapsedMs = 0;
   run.laps = [];
+  renderedLapCount = -1;
   cancelLapAnnouncements();
   gpsStatus.textContent = "GPS 未接続";
   renderRun();

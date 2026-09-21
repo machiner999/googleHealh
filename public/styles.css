@@ -35,12 +35,12 @@ b {
 .shell {
   width: min(1020px, calc(100% - 40px));
   margin: 0 auto;
-  padding: 38px 0 34px;
+  padding: 20px 0 34px;
 }
 
 .topbar {
-  margin-bottom: 24px;
-  padding-bottom: 24px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -48,7 +48,7 @@ b {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 34px;
+  margin-bottom: 0;
 }
 
 .wordmark,
@@ -144,8 +144,8 @@ h2 {
 
 .notice {
   position: relative;
-  margin-bottom: 12px;
-  padding: 14px 16px 14px 42px;
+  margin-bottom: 8px;
+  padding: 10px 14px 10px 40px;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: #e8e7df;
@@ -156,8 +156,8 @@ h2 {
 
 .notice::before {
   position: absolute;
-  top: 17px;
-  left: 17px;
+  top: 13px;
+  left: 15px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -182,6 +182,20 @@ h2 {
   background: var(--panel);
 }
 
+.panel.lap-chart-panel {
+  overflow: hidden;
+  padding: 0;
+}
+
+.panel.lap-chart-panel .panel-heading {
+  margin-bottom: 0;
+  padding: 24px;
+}
+
+.panel.lap-chart-panel h2 {
+  font-size: 16px;
+}
+
 .panel-heading {
   display: flex;
   align-items: flex-start;
@@ -189,15 +203,6 @@ h2 {
   margin-bottom: 20px;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--line);
-}
-
-.section-index {
-  margin-bottom: 6px;
-  color: var(--signal-dark);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .08em;
 }
 
 .legend {
@@ -215,7 +220,8 @@ h2 {
 }
 
 .run-hero {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+  padding: 18px;
   border-color: var(--night);
   background: var(--night);
   color: #f5f6f0;
@@ -225,8 +231,8 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 22px;
-  padding-bottom: 15px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #393c36;
 }
 
@@ -264,7 +270,7 @@ h2 {
 .run-metrics {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   border-top: 1px solid #393c36;
   border-left: 1px solid #393c36;
 }
@@ -340,14 +346,22 @@ h2 {
 .lap-chart {
   min-height: 150px;
   padding: 14px;
-  border: 1px solid var(--line);
+  border: 1px solid #393c36;
   border-radius: 6px;
-  background: #efeee6;
+  background: var(--night);
+}
+
+.panel.lap-chart-panel .lap-chart {
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 0;
 }
 
 .lap-chart-plot {
   width: 100%;
-  max-width: 760px;
+  max-width: none;
   margin: 0 auto;
 }
 
@@ -359,43 +373,80 @@ h2 {
 }
 
 .lap-chart-grid line {
-  stroke: #cfd0c6;
+  stroke: #454a40;
   stroke-width: 1;
   stroke-dasharray: 4 6;
   vector-effect: non-scaling-stroke;
 }
 
+.lap-chart-grid .lap-chart-axis {
+  stroke: #63675e;
+}
+
 .lap-chart-area {
-  fill: rgba(95, 128, 0, .1);
+  fill: rgba(201, 255, 61, .2);
 }
 
 .lap-chart-line {
   fill: none;
-  stroke: var(--signal-dark);
+  stroke: var(--signal);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 3;
+  stroke-width: 4;
   vector-effect: non-scaling-stroke;
 }
 
 .lap-chart-point {
-  fill: var(--panel);
-  stroke: var(--signal-dark);
-  stroke-width: 3;
+  fill: var(--signal);
+  stroke: #f4f5ef;
+  stroke-width: 2.5;
   vector-effect: non-scaling-stroke;
 }
 
 .lap-chart-point.is-best {
   fill: var(--signal);
   stroke: var(--ink);
+  stroke-width: 4;
 }
 
 .lap-chart-label {
-  fill: var(--muted);
+  fill: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 20px;
+  font-weight: 850;
+  paint-order: stroke;
+  stroke: var(--night);
+  stroke-width: 4px;
+  text-anchor: middle;
+}
+
+.lap-chart-axis-unit {
+  fill: var(--signal);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 17px;
+  font-weight: 850;
+  paint-order: stroke;
+  stroke: var(--night);
+  stroke-width: 4px;
+}
+
+.lap-chart-y-axis-unit {
+  text-anchor: start;
+}
+
+.lap-chart-x-axis-unit {
+  text-anchor: middle;
+}
+
+.lap-chart-axis-label {
+  fill: #f4f5ef;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 18px;
-  font-weight: 700;
-  text-anchor: middle;
+  font-weight: 850;
+  paint-order: stroke;
+  stroke: var(--night);
+  stroke-width: 3px;
+  text-anchor: start;
 }
 
 .lap-chart-empty {
@@ -404,7 +455,7 @@ h2 {
   align-items: center;
   justify-content: center;
   gap: 15px;
-  color: var(--muted);
+  color: var(--night-muted);
   font-size: 14px;
   text-align: center;
 }
@@ -417,7 +468,7 @@ h2 {
   position: relative;
   width: min(280px, 82%);
   height: 35px;
-  border-bottom: 1px dashed #bfc1b6;
+  border-bottom: 1px dashed #63675e;
 }
 
 .lap-chart-placeholder::after {
@@ -427,7 +478,8 @@ h2 {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--signal-dark);
+  background: var(--signal);
+  box-shadow: 0 0 0 2px var(--signal-dark);
   content: "";
 }
 
@@ -484,15 +536,15 @@ h2 {
     padding-top: 20px;
   }
 
-  .brand-row {
-    margin-bottom: 28px;
-  }
-
   h1 {
     font-size: 42px;
   }
 
   .panel {
+    padding: 18px 16px;
+  }
+
+  .panel.lap-chart-panel .panel-heading {
     padding: 18px 16px;
   }
 
