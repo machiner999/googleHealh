@@ -139,6 +139,8 @@ gcloud run services describe "${SERVICE_NAME}" \
 `server.js`、`public/`、またはその他のアプリファイルを変更した後は、プロジェクトのルートディレクトリで次のコマンドを実行します。Secretを作り直す必要はありません。
 
 ```bash
+export PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
+
 gcloud run deploy "${SERVICE_NAME}" \
   --source . \
   --project="${PROJECT_ID}" \
