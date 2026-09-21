@@ -3,17 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Running Tracker</title>
+    <title>RUN LOG | ランニング記録</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <main class="shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">RUNNING TRACKER</p>
-          <h1>ランニングの状況</h1>
-          <p class="subtitle">走行中の距離・時間・ペース・ラップをリアルタイムで確認します。</p>
+        <div class="brand-row">
+          <p class="wordmark"><span aria-hidden="true"></span>RUN LOG</p>
+          <p class="device-note">GPS TRACKER</p>
         </div>
+        <h1>今日のラン</h1>
+        <p class="subtitle">距離、タイム、1 kmごとのペースを記録します。</p>
       </header>
 
       <section id="run-view" aria-live="polite">
@@ -32,28 +33,32 @@
             <button id="run-start" class="button run-button start" type="button">計測開始</button>
             <button id="run-pause" class="button run-button pause hidden" type="button">一時停止</button>
             <button id="run-resume" class="button run-button resume hidden" type="button">再開</button>
-            <button id="run-stop" class="button secondary run-button hidden" type="button">終了して保存</button>
+            <button id="run-stop" class="button secondary run-button hidden" type="button">計測を終了</button>
           </div>
         </section>
 
         <section class="run-columns">
+          <section class="panel lap-chart-panel">
+            <div class="panel-heading">
+              <div><p class="section-index">01</p><h2>ラップペース</h2></div>
+              <span id="lap-chart-summary" class="legend">—</span>
+            </div>
+            <div id="lap-chart" class="lap-chart lap-chart-empty" role="img" aria-label="ラップペースのグラフ">
+              <span class="lap-chart-placeholder" aria-hidden="true"></span>
+              <p>1 km走るとペースの推移が表示されます。</p>
+            </div>
+          </section>
           <section class="panel">
             <div class="panel-heading">
-              <div><p class="eyebrow">KILOMETER LAPS</p><h2>ラップ</h2></div>
+              <div><p class="section-index">02</p><h2>1 kmラップ</h2></div>
               <span id="lap-count" class="legend">0 km</span>
             </div>
             <div id="lap-list" class="lap-list empty-list">1km走るとラップが表示されます。</div>
           </section>
-          <section class="panel">
-            <div class="panel-heading">
-              <div><p class="eyebrow">HISTORY</p><h2>走行履歴</h2></div>
-            </div>
-            <div id="run-history" class="run-history empty-list">保存された走行履歴はありません。</div>
-          </section>
         </section>
       </section>
 
-      <p class="privacy">ランニングのGPS軌跡は保存・送信せず、走行結果とラップ概要だけをこのブラウザに保存します。</p>
+      <p class="privacy">ランニングのGPS軌跡や計測結果は保存・送信しません。ページを閉じると計測結果は消去されます。</p>
     </main>
     <script src="/app.js" type="module"></script>
   </body>
