@@ -32,7 +32,10 @@ gcloud run deploy "${service_name}" \
   --min=0 \
   --max=1 \
   --cpu=1 \
-  --memory=256Mi
+  --memory=256Mi \
+  --port=8080 \
+  --command=node \
+  --args=server.js
 
 page="$(curl --fail --silent --show-error "${service_url}/")"
 if ! grep -q '<title>RUN LOG | ランニング記録</title>' <<< "${page}" \
