@@ -92,7 +92,7 @@ function renderLapChart() {
   const points = run.laps.map((lap, index) => ({
     lap,
     x: run.laps.length === 1 ? chartWidth / 2 : chartLeft + index * xStep,
-    y: chartTop + ((lap.lapMs - chartMinMs) / chartRangeMs) * (chartBottom - chartTop)
+    y: chartTop + ((chartMaxMs - lap.lapMs) / chartRangeMs) * (chartBottom - chartTop)
   }));
   const pointList = points.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   const areaPath = `M ${points[0].x.toFixed(1)} ${chartBottom} L ${pointList.replaceAll(" ", " L ")} L ${points.at(-1).x.toFixed(1)} ${chartBottom} Z`;
@@ -111,9 +111,9 @@ function renderLapChart() {
           <line x1="${chartLeft}" y1="${chartBottom}" x2="${chartRight}" y2="${chartBottom}"></line>
         </g>
         <text class="lap-chart-axis-unit lap-chart-y-axis-unit" x="4" y="13">ペース (min/km)</text>
-        <text class="lap-chart-axis-label" x="${chartLeft - 8}" y="${chartTop + 5}">${formatDuration(chartMinMs)}</text>
+        <text class="lap-chart-axis-label" x="${chartLeft - 8}" y="${chartTop + 5}">${formatDuration(chartMaxMs)}</text>
         <text class="lap-chart-axis-label" x="${chartLeft - 8}" y="${(chartTop + chartBottom) / 2 + 5}">${formatDuration(chartMidMs)}</text>
-        <text class="lap-chart-axis-label" x="${chartLeft - 8}" y="${chartBottom + 5}">${formatDuration(chartMaxMs)}</text>
+        <text class="lap-chart-axis-label" x="${chartLeft - 8}" y="${chartBottom + 5}">${formatDuration(chartMinMs)}</text>
         <path class="lap-chart-area" d="${areaPath}"></path>
         <polyline class="lap-chart-line" points="${pointList}"></polyline>
         ${points.map(({ lap, x, y }) => `<circle class="lap-chart-point${lap.lapMs === bestLapMs ? " is-best" : ""}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"></circle>`).join("")}
