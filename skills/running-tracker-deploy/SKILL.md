@@ -24,8 +24,8 @@ Use `PROJECT_ID`, `REGION`, `SERVICE_NAME`, or `SERVICE_URL` overrides only when
 2. Run `npm test`, `node --check server.js`, and `node --check public/app.js`. Stop if validation fails.
 3. Confirm `gcloud auth list` has an active account and that the target project is accessible. If authentication is missing, ask the user to complete `gcloud auth login`; never guess an account or type credentials.
 4. If the user explicitly requested commit and push, stage only the intended files, create a focused imperative commit, and push the current branch to `origin`. Do not amend or force-push unless explicitly requested.
-5. Run `scripts/deploy.sh` from the repository root. It preserves existing Cloud Run environment settings and deploys from the current source with `gcloud run deploy --source .`.
-6. Verify the returned service URL with an HTTPS request and confirm the response contains the `Running Tracker` title and the running-only UI.
+5. Run `scripts/deploy.sh` from the repository root. It preserves existing Cloud Run environment settings, deploys from the current source with `gcloud run deploy --source .`, and routes all traffic to the latest revision.
+6. Verify the returned service URL with an HTTPS request and confirm the response matches the current `public/index.html`.
 
 The deploy script performs validation and deployment but does not commit, push, delete resources, rotate secrets, or alter IAM. Those actions require separate explicit user authorization.
 

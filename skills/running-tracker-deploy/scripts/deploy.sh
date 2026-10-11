@@ -37,10 +37,14 @@ gcloud run deploy "${service_name}" \
   --command=node \
   --args=server.js
 
-page="$(curl --fail --silent --show-error "${service_url}/")"
-if ! grep -q '<title>RUN LOG | ランニング記録</title>' <<< "${page}" \
-  || ! grep -q 'id="run-start"' <<< "${page}"; then
-  echo "Deployment response did not contain the RUN LOG title and running controls" >&2
+# Existing services can have traffic pinned to an earlier revision.
+gcloud run services update-traffic "${service_name}" \
+  --to-latest \
+  --project="${project_id}" \
+  --region="${region}"
+
+if ! curl --fail --silent --show-error "${service_url}/" | cmp -s public/index.html -; then
+  echo "Deployment response did not match the current running screen" >&2
   exit 1
 fi
 
