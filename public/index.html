@@ -8,24 +8,27 @@
   </head>
   <body>
     <main class="shell">
-      <section id="run-view" aria-live="polite">
-        <div id="run-notice" class="notice">開始を押すとGPS計測を開始します。走行中はGPSの許可が必要です。</div>
+      <section id="run-view" aria-label="ランニング計測">
         <section class="run-hero panel">
           <div class="run-status-row">
-            <span id="run-state" class="run-state">準備完了</span>
-            <span id="gps-status" class="gps-status">GPS 未接続</span>
+            <span id="run-state" class="run-state" role="status">準備完了</span>
+            <span id="gps-status" class="gps-status" role="status">GPS 未接続</span>
           </div>
           <div class="run-metrics">
-            <div class="run-metric primary"><span>経過時間</span><strong id="run-time">0:00</strong></div>
-            <div class="run-metric"><span>走行距離</span><strong><b id="run-distance">0.00</b><small> km</small></strong></div>
-            <div class="run-metric"><span>ペース</span><strong><b id="run-pace">—</b><small> /km</small></strong></div>
+            <div class="run-metric primary">
+              <span>平均ペース <small>分/km</small></span>
+              <strong id="run-pace">—</strong>
+            </div>
+            <div class="run-metric metric-row"><span>走行距離</span><strong><b id="run-distance">0.00</b><small> km</small></strong></div>
+            <div class="run-metric metric-row"><span>経過時間</span><strong id="run-time">0:00</strong></div>
           </div>
           <div class="run-controls">
-            <button id="run-start" class="button run-button start" type="button">計測開始</button>
-            <button id="run-pause" class="button run-button pause hidden" type="button">一時停止</button>
-            <button id="run-resume" class="button run-button resume hidden" type="button">再開</button>
+            <button id="run-start" class="button run-button start" type="button"><span class="button-icon" aria-hidden="true">▶</span><span class="button-label">計測開始</span></button>
+            <button id="run-pause" class="button run-button pause hidden" type="button"><span class="button-icon" aria-hidden="true">Ⅱ</span>一時停止</button>
+            <button id="run-resume" class="button run-button resume hidden" type="button"><span class="button-icon" aria-hidden="true">▶</span>再開</button>
             <button id="run-stop" class="button secondary run-button hidden" type="button">計測を終了</button>
           </div>
+          <div id="run-notice" class="notice" role="status">開始を押すとGPS計測を開始します。走行中はGPSの許可が必要です。</div>
         </section>
 
         <section class="run-columns">

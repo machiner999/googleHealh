@@ -4,3 +4,8 @@ node_modules
 .DS_Store
 npm-debug.log
 tests
+.storybook
+stories
+storybook-static
+output
+.playwright-mcp

@@ -7,10 +7,16 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "storybook": "storybook dev -p 6006 --host 127.0.0.1 --exact-port --initial-path=/story/running-screen--running --disable-telemetry",
+    "build-storybook": "storybook build --disable-telemetry"
   },
   "engines": {
-    "node": ">=20"
+    "node": "^20.19.0 || >=22.12.0"
   },
-  "dependencies": {}
+  "devDependencies": {
+    "@storybook/html-vite": "10.6.1",
+    "storybook": "10.6.1",
+    "vite": "7.3.7"
+  }
 }

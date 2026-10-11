@@ -1,3 +1,6 @@
 .env
 node_modules/
 .DS_Store
+storybook-static/
+output/playwright/
+.playwright-mcp/
